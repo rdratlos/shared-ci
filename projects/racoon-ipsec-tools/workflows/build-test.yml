@@ -1,0 +1,170 @@
+# .github/workflows/ci-build-test.yml
+#
+# CI build + unit-test status for feature/ubuntu-resolute-compatibility.
+#
+# Tri-state result, in the spirit of the deprecation canary:
+#
+#   RED    (job failure)        -> the project build (`make`) failed.
+#   ORANGE (neutral check)      -> build OK, but `make check` reported
+#                                  failing unit tests.
+#   GREEN  (success)            -> build and all unit tests passed.
+#
+# GitHub has no literal "orange" conclusion; `neutral` is its soft-fail state
+# and renders distinctly from success/failure. We surface it on a dedicated
+# check run named "CI: build & test" so the tri-state is unambiguous. The
+# job's own tile additionally goes red on build failure, since a broken build
+# should be obvious without reading a sub-check.
+
+name: CI Build & Test
+
+on:
+  push:
+    branches:
+      - feature/ubuntu-resolute-compatibility
+  pull_request:
+    branches:
+      - feature/ubuntu-resolute-compatibility
+  schedule:
+    # Nightly: catches toolchain / libssl drift on the runner image.
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build and test'
+        required: true
+        default: 'feature/ubuntu-resolute-compatibility'
+
+permissions:
+  contents: read
+  checks: write   # required to publish the dedicated tri-state check run
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    name: Build & unit tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
+
+      - name: Install build dependencies
+        # Adjust to match what your ./configure actually requires. The krb5 dev
+        # package is included because the build pulls in /usr/include/mit-krb5.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential automake autoconf libtool pkg-config \
+            flex bison gawk libssl-dev libfl-dev libkrb5-dev libldap2-dev \
+            libpam0g-dev linux-headers-generic libcrypt-dev
+
+      - name: Report toolchain versions
+        run: |
+          gcc --version | head -1
+          pkg-config --modversion openssl || true
+
+      - name: Generate build system
+        run: |
+          if [ -x ./bootstrap ]; then ./bootstrap; \
+          elif [ -f ./autogen.sh ]; then sh ./autogen.sh; \
+          else autoreconf -fi; fi
+
+      - name: Configure
+        # Add any project-specific flags your normal build uses here.
+        run: |
+          CPPFLAGS="-Wdate-time -D_FORTIFY_SOURCE=3" \
+          LDFLAGS="-Wl,-Bsymbolic-functions -flto=auto -ffat-lto-objects -Wl,-z,relro" \
+          CFLAGS="-g -O2 -Werror=implicit-function-declaration -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wformat -Werror=format-security -fcf-protection -Wno-old-style-definition" \
+          ./configure --verbose --host=x86_64-linux-gnu --build=x86_64-linux-gnu \
+            --prefix=/usr --sysconfdir=/etc/racoon --libdir=/usr/lib/ipsec-tools \
+            --mandir=\${prefix}/share/man --infodir=\${prefix}/share/info \
+            --localstatedir=/var/run --enable-shared --disable-static \
+            --enable-frag --enable-gssapi --enable-hybrid --with-libldap \
+            --enable-dpd --enable-adminport --with-kernel-headers=/usr/include \
+            --with-libpam --without-readline --disable-security-context --enable-natt
+
+      - name: Build
+        id: build
+        # Compile code and unit tests
+        # NOT continue-on-error: a build failure turns the job red.
+        run: |
+          make
+          make check TESTS=
+
+      - name: Unit tests
+        id: test
+        # Runs only if the build succeeded; never fails the job on its own so
+        # we can report the "orange" state ourselves.
+        if: success()
+        continue-on-error: true
+        run: |
+          cd test
+          make check-verbose
+
+      - name: Annotate result
+        if: always()
+        run: |
+          if [ "${{ steps.build.outcome }}" = "failure" ]; then
+            echo "::error title=Build Failed::\`make\` failed. See the Build step logs."
+          elif [ "${{ steps.test.outcome }}" = "failure" ]; then
+            echo "::warning title=Unit Tests Failed::Build succeeded but \`make check\` reported failing tests."
+          else
+            echo "::notice title=CI Green::Build and unit tests passed."
+          fi
+
+      - name: Publish tri-state check
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const build = '${{ steps.build.outcome }}';
+            const test  = '${{ steps.test.outcome }}';
+
+            let conclusion, title, summary;
+            if (build === 'failure') {
+              conclusion = 'failure';                 // RED
+              title = 'Build failed';
+              summary = 'The project build (`make`) failed. See the Build step logs.';
+            } else if (test === 'failure') {
+              conclusion = 'neutral';                 // ORANGE
+              title = 'Build OK — unit tests failed';
+              summary = 'The project built successfully, but `make check` reported failing unit tests.';
+            } else {
+              conclusion = 'success';                 // GREEN
+              title = 'Build and tests passed';
+              summary = 'The project built and all unit tests passed.';
+            }
+
+            // Use the PR head SHA on pull_request events, else the pushed commit.
+            const sha = context.payload.pull_request?.head?.sha || context.sha;
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'CI: build & test',
+              head_sha: sha,
+              status: 'completed',
+              conclusion,
+              output: { title, summary }
+            });
+
+      - name: CI summary
+        if: always()
+        run: |
+          {
+            echo "## CI Build & Test"
+            echo ""
+            echo "| Stage | Result |"
+            echo "|-------|--------|"
+            echo "| Build (\`make\`) | ${{ steps.build.outcome }} |"
+            echo "| Unit tests (\`make check\`) | ${{ steps.test.outcome }} |"
+            echo ""
+            if [ "${{ steps.build.outcome }}" = "failure" ]; then
+              echo "> 🔴 **Red** — build failed."
+            elif [ "${{ steps.test.outcome }}" = "failure" ]; then
+              echo "> 🟠 **Orange** — built, but unit tests failed."
+            else
+              echo "> 🟢 **Green** — build and tests passed."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
