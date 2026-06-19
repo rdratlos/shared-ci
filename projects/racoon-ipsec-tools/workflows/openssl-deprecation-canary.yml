@@ -39,7 +39,7 @@ jobs:
       ref: feature/ubuntu-resolute-compatibility
       project-deps: 'libssl-dev libfl-dev libkrb5-dev libldap2-dev libpam0g-dev linux-headers-generic libcrypt-dev'
       env-vars: |
-        NODEP=-DOPENSSL_API_COMPAT=0x30000000L -DOPENSSL_NO_DEPRECATED
+        NODEP="-DOPENSSL_API_COMPAT=0x30000000L -DOPENSSL_NO_DEPRECATED"
       configure-command: >
         CPPFLAGS="-Wdate-time -D_FORTIFY_SOURCE=3"
         LDFLAGS="-Wl,-Bsymbolic-functions -flto=auto -ffat-lto-objects -Wl,-z,relro"
