@@ -1,0 +1,58 @@
+name: 'Setup C++ Autotools'
+description: >
+  Installs the GNU Autotools toolchain on Ubuntu.
+  Include in your repo's .github/actions/ directory or reference via
+  `uses: org/shared-ci/.github/actions/setup-cpp-autotools@main`.
+
+inputs:
+  install-valgrind:
+    description: 'Install Valgrind for memory debugging.'
+    required: false
+    default: 'false'
+  install-clang-tools:
+    description: 'Install clang-tidy and clang-format.'
+    required: false
+    default: 'false'
+  project-deps:
+    description: >
+      Space-separated additional apt packages required by the project
+      (e.g. "libssl-dev libkrb5-dev libldap2-dev").
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Cache apt packages
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt/archives
+        key: ${{ runner.os }}-apt-autotools-static
+        lookup-only: true
+
+    - name: Install Autotools base dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential automake autoconf libtool pkg-config \
+          flex bison gawk
+
+    - name: Install project-specific dependencies
+      if: ${{ inputs.project-deps != '' }}
+      shell: bash
+      run: |
+        sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+
+    - name: Install Valgrind
+      if: ${{ inputs.install-valgrind == 'true' }}
+      shell: bash
+      run: |
+        sudo apt-get install -y --no-install-recommends valgrind
+
+    - name: Install Clang static analysis tools
+      if: ${{ inputs.install-clang-tools == 'true' }}
+      shell: bash
+      run: |
+        sudo apt-get install -y --no-install-recommends clang-tidy clang-format

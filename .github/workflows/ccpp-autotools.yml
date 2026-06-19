@@ -1,0 +1,232 @@
+# Reusable workflow for C/C++ projects using GNU Autotools.
+#
+# Abstraction choices:
+#   - Split into two jobs (build, test) so test matrices can scale independently
+#     and build artifacts are shared between them.
+#   - The build tree is uploaded as an artifact and downloaded by the test job,
+#     avoiding a second configure + compile cycle.
+#   - Bootstrap is auto-detected: ./bootstrap > ./autogen.sh > autoreconf -fi.
+#   - Valgrind is opt-in via `enable-valgrind`.
+#   - Setup steps are inlined here because `uses: org/repo/.github/workflows/...`
+#     cannot reference sibling composite actions with relative `./` paths.
+#     Consumers who want the composite action directly should copy it into their
+#     repo's `.github/actions/` directory or reference it via external path.
+
+name: 'C/C++ Autotools CI'
+
+on:
+  workflow_call:
+    inputs:
+      configure-command:
+        description: 'Full ./configure invocation (may include env vars).'
+        required: false
+        type: string
+        default: './configure'
+      build-command:
+        description: 'Command to compile the project.'
+        required: false
+        type: string
+        default: 'make -j2'
+      test-command:
+        description: 'Command to run unit tests.'
+        required: false
+        type: string
+        default: 'make check'
+      test-working-directory:
+        description: 'Subdirectory to cd into before running tests.'
+        required: false
+        type: string
+        default: ''
+      enable-valgrind:
+        description: 'Run Valgrind checks after standard tests.'
+        required: false
+        type: bool
+        default: false
+      valgrind-command:
+        description: 'Valgrind test command.'
+        required: false
+        type: string
+        default: 'make check-valgrind'
+      bootstrap-command:
+        description: 'Explicit bootstrap command (empty = auto-detect).'
+        required: false
+        type: string
+        default: ''
+      artifact-name:
+        description: 'Name prefix for the build artifact.'
+        required: false
+        type: string
+        default: 'build-tree'
+      runs-on:
+        description: 'GitHub Actions runner label.'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      install-valgrind:
+        description: 'Install Valgrind in the build environment.'
+        required: false
+        type: bool
+        default: false
+      install-clang-tools:
+        description: 'Install clang-tidy and clang-format.'
+        required: false
+        type: bool
+        default: false
+      project-deps:
+        description: 'Extra apt packages (space-separated).'
+        required: false
+        type: string
+        default: ''
+
+    # Exposed to consumers for custom reporting (e.g. tri-state check runs).
+    outputs:
+      build-result: ${{ jobs.build.outputs.result }}
+      test-result:  ${{ jobs.test.outputs.result }}
+
+jobs:
+  build:
+    name: 'Build'
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+    outputs:
+      # Propagate the build step's outcome to the workflow output.
+      result: ${{ steps.compile.outputs.outcome }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-autotools-static
+          lookup-only: true
+
+      - name: Install Autotools toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential automake autoconf libtool pkg-config \
+            flex bison gawk
+
+      - name: Install project-specific dependencies
+        if: ${{ inputs.project-deps != '' }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+
+      - name: Install Valgrind
+        if: ${{ inputs.install-valgrind }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends valgrind
+
+      - name: Install Clang static analysis tools
+        if: ${{ inputs.install-clang-tools }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends clang-tidy clang-format
+
+      - name: Bootstrap build system
+        if: ${{ inputs.bootstrap-command != '' }}
+        shell: bash
+        run: ${{ inputs.bootstrap-command }}
+
+      - name: Auto-detect bootstrap
+        if: ${{ inputs.bootstrap-command == '' }}
+        shell: bash
+        run: |
+          if [ -x ./bootstrap ]; then
+            ./bootstrap
+          elif [ -f ./autogen.sh ]; then
+            sh ./autogen.sh
+          else
+            autoreconf -fi
+          fi
+
+      - name: Configure
+        id: configure
+        shell: bash
+        run: ${{ inputs.configure-command }}
+
+      - name: Compile
+        id: compile
+        shell: bash
+        run: ${{ inputs.build-command }}
+
+      - name: Upload build tree
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: .
+          retention-days: 1
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+  test:
+    name: 'Test'
+    needs: build
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+    outputs:
+      # Propagate the test step's outcome to the workflow output.
+      result: ${{ steps.aggregate.outputs.outcome }}
+
+    steps:
+      - name: Download build tree
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+
+      - name: Run unit tests
+        id: unit-test
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.test-working-directory }}" ]; then
+            cd ${{ inputs.test-working-directory }}
+          fi
+          ${{ inputs.test-command }}
+
+      - name: Run Valgrind checks
+        if: ${{ inputs.enable-valgrind && success() }}
+        id: valgrind-test
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.test-working-directory }}" ]; then
+            cd ${{ inputs.test-working-directory }}
+          fi
+          ${{ inputs.valgrind-command }}
+
+      - name: Aggregate test outcome
+        id: aggregate
+        if: always()
+        shell: bash
+        run: |
+          test_outcome="${{ steps.unit-test.outcome }}"
+          vg_outcome="${{ steps.valgrind-test.outcome }}"
+          result="success"
+
+          if [ "$test_outcome" = "failure" ]; then
+            echo "::error title=Tests Failed::\`${{ inputs.test-command }}\` reported failures."
+            result="failure"
+          fi
+          if [ "$vg_outcome" = "failure" ]; then
+            echo "::error title=Valgrind Failed::\`${{ inputs.valgrind-command }}\` found memory issues."
+            result="failure"
+          fi
+          if [ "$result" = "success" ]; then
+            echo "::notice title=All Checks Passed::Tests and validation completed successfully."
+          fi
+          echo "outcome=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Fail job if tests or Valgrind failed
+        if: steps.aggregate.outputs.outcome == 'failure'
+        shell: bash
+        run: exit 1
