@@ -1,0 +1,226 @@
+# Reusable workflow for compiling a specific set of C/C++ object targets
+# and capturing their output for later analysis (e.g. deprecation canaries,
+# ABI/flag experiments, "does this still build under X" probes).
+#
+# Unlike ccpp-autotools.yml, this workflow does not run the project's test
+# suite. It exists to compile a handful of targets -- each potentially with
+# its own CC/CFLAGS override -- and preserve the compiler output as an
+# artifact, regardless of whether the compile succeeded.
+#
+# Abstraction choices:
+#   - `targets` is a JSON array so a single call can probe multiple objects
+#     with different overrides, mirroring patterns like the OpenSSL
+#     deprecation canary (a "regression guard" target that must stay green,
+#     plus a "readiness tracker" target that is allowed to stay red).
+#   - Each target has its own `blocking` flag: blocking targets fail the job,
+#     non-blocking ones are recorded but don't fail the run.
+#   - Compiler output is captured per-target into its own log file and always
+#     uploaded, even if the job ultimately fails.
+#   - Setup steps are inlined here for the same reason as ccpp-autotools.yml:
+#     `uses: org/repo/.github/workflows/...` cannot reference sibling
+#     composite actions with relative `./` paths.
+
+name: 'C/C++ Target Compile Canary'
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or SHA) to check out. Defaults to the calling workflow''s ref.'
+        required: false
+        type: string
+        default: ''
+      configure-command:
+        description: 'Full ./configure invocation (may include env vars).'
+        required: false
+        type: string
+        default: './configure'
+      bootstrap-command:
+        description: 'Explicit bootstrap command (empty = auto-detect).'
+        required: false
+        type: string
+        default: ''
+      targets:
+        description: >
+          JSON array of compile targets. Each entry supports:
+            name (required, used for the log file name and output key)
+            target (required, the make target, e.g. "crypto_openssl.o")
+            dir (optional, directory passed to "make -C", default ".")
+            label (optional, human-readable name for the summary, default name)
+            cc (optional, CC override passed to make, default "gcc")
+            blocking (optional bool, fail the job if this target fails to
+              compile, default true)
+          Example:
+            [{"name":"guard","label":"Regression guard","dir":"src/racoon","target":"crypto_openssl.o","cc":"gcc -DOPENSSL_NO_DEPRECATED","blocking":true},
+             {"name":"tracker","label":"Readiness tracker","dir":"src/racoon","target":"plainrsa-gen.o","cc":"gcc -DOPENSSL_NO_DEPRECATED","blocking":false}]
+        required: true
+        type: string
+      env-vars:
+        description: 'Newline-separated KEY=VALUE pairs exported before configure and compile (e.g. NODEP=-DOPENSSL_NO_DEPRECATED).'
+        required: false
+        type: string
+        default: ''
+      artifact-name:
+        description: 'Name prefix for the captured-output artifact.'
+        required: false
+        type: string
+        default: 'compile-logs'
+      runs-on:
+        description: 'GitHub Actions runner label.'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      project-deps:
+        description: 'Extra apt packages (space-separated).'
+        required: false
+        type: string
+        default: ''
+
+    outputs:
+      results:
+        description: 'JSON array of {name, label, target, outcome, blocking} for each compiled target.'
+        value: ${{ jobs.compile.outputs.results }}
+      result:
+        description: 'Overall outcome (success/failure) considering only blocking targets.'
+        value: ${{ jobs.compile.outputs.result }}
+
+jobs:
+  compile:
+    name: 'Compile targets'
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+    outputs:
+      results: ${{ steps.compile.outputs.results }}
+      result: ${{ steps.compile.outputs.result }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-autotools-static
+          lookup-only: true
+
+      - name: Install Autotools toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential automake autoconf libtool pkg-config \
+            flex bison gawk
+
+      - name: Install project-specific dependencies
+        if: ${{ inputs.project-deps != '' }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+
+      - name: Bootstrap build system
+        if: ${{ inputs.bootstrap-command != '' }}
+        shell: bash
+        run: ${{ inputs.bootstrap-command }}
+
+      - name: Auto-detect bootstrap
+        if: ${{ inputs.bootstrap-command == '' }}
+        shell: bash
+        run: |
+          if [ -x ./bootstrap ]; then
+            ./bootstrap
+          elif [ -f ./autogen.sh ]; then
+            sh ./autogen.sh
+          else
+            autoreconf -fi
+          fi
+
+      - name: Configure
+        id: configure
+        shell: bash
+        env:
+          ENV_VARS: ${{ inputs.env-vars }}
+        run: |
+          set -a
+          if [ -n "$ENV_VARS" ]; then
+            eval "$ENV_VARS"
+          fi
+          set +a
+          ${{ inputs.configure-command }}
+
+      - name: Compile targets and capture output
+        id: compile
+        shell: bash
+        env:
+          TARGETS_JSON: ${{ inputs.targets }}
+          ENV_VARS: ${{ inputs.env-vars }}
+        run: |
+          set -a
+          if [ -n "$ENV_VARS" ]; then
+            eval "$ENV_VARS"
+          fi
+          set +a
+
+          mkdir -p compile-logs
+          results='[]'
+          blocking_failed=false
+
+          {
+            echo "## Target Compile Results"
+            echo ""
+            echo "| Target | Make Target | Outcome | Blocking |"
+            echo "|--------|-------------|---------|----------|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          while IFS= read -r row; do
+            name=$(jq -r '.name' <<<"$row")
+            dir=$(jq -r '.dir // "."' <<<"$row")
+            target=$(jq -r '.target' <<<"$row")
+            cc=$(jq -r '.cc // "gcc"' <<<"$row")
+            label=$(jq -r '.label // .name' <<<"$row")
+            blocking=$(jq -r 'if .blocking == false then "false" else "true" end' <<<"$row")
+            logfile="compile-logs/${name}.log"
+
+            if make -C "$dir" "$target" CC="$cc" > "$logfile" 2>&1; then
+              outcome=success
+            else
+              outcome=failure
+              if [ "$blocking" = "true" ]; then
+                blocking_failed=true
+              fi
+            fi
+
+            results=$(jq --arg name "$name" --arg label "$label" --arg target "$target" \
+              --arg outcome "$outcome" --argjson blocking "$blocking" \
+              '. + [{name:$name, label:$label, target:$target, outcome:$outcome, blocking:$blocking}]' \
+              <<<"$results")
+
+            echo "| $label | \`$target\` | $outcome | $blocking |" >> "$GITHUB_STEP_SUMMARY"
+          done < <(jq -c '.[]' <<<"$TARGETS_JSON")
+
+          echo "results<<RESULTS_EOF" >> "$GITHUB_OUTPUT"
+          echo "$results" >> "$GITHUB_OUTPUT"
+          echo "RESULTS_EOF" >> "$GITHUB_OUTPUT"
+
+          if [ "$blocking_failed" = "true" ]; then
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=success" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload compile output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: compile-logs/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Fail job if a blocking target failed to compile
+        if: ${{ steps.compile.outputs.result == 'failure' }}
+        shell: bash
+        run: exit 1
