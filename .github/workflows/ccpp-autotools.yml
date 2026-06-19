@@ -40,7 +40,7 @@ on:
       enable-valgrind:
         description: 'Run Valgrind checks after standard tests.'
         required: false
-        type: bool
+        type: boolean
         default: false
       valgrind-command:
         description: 'Valgrind test command.'
@@ -65,12 +65,12 @@ on:
       install-valgrind:
         description: 'Install Valgrind in the build environment.'
         required: false
-        type: bool
+        type: boolean
         default: false
       install-clang-tools:
         description: 'Install clang-tidy and clang-format.'
         required: false
-        type: bool
+        type: boolean
         default: false
       project-deps:
         description: 'Extra apt packages (space-separated).'
@@ -81,7 +81,7 @@ on:
     # Exposed to consumers for custom reporting (e.g. tri-state check runs).
     outputs:
       build-result: ${{ jobs.build.outputs.result }}
-      test-result:  ${{ jobs.test.outputs.result }}
+      test-result: ${{ jobs.test.outputs.result }}
 
 jobs:
   build:
