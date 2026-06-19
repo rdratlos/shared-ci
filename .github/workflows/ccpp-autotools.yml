@@ -80,8 +80,12 @@ on:
 
     # Exposed to consumers for custom reporting (e.g. tri-state check runs).
     outputs:
-      build-result: ${{ jobs.build.outputs.result }}
-      test-result: ${{ jobs.test.outputs.result }}
+      build-result:
+        description: 'Outcome of the build job (success/failure).'
+        value: ${{ jobs.build.outputs.result }}
+      test-result:
+        description: 'Outcome of the test job (success/failure).'
+        value: ${{ jobs.test.outputs.result }}
 
 jobs:
   build:
