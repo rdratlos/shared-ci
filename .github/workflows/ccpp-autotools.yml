@@ -194,6 +194,33 @@ jobs:
         with:
           name: ${{ inputs.artifact-name }}
 
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-autotools-static
+          lookup-only: true
+
+      - name: Install Autotools toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential automake autoconf libtool pkg-config \
+            flex bison gawk
+
+      - name: Install project-specific dependencies
+        if: ${{ inputs.project-deps != '' }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+
+      - name: Install Valgrind
+        if: ${{ inputs.enable-valgrind }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends valgrind
+
       - name: Run unit tests
         id: unit-test
         continue-on-error: true
