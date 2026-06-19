@@ -17,6 +17,11 @@ name: 'C/C++ Autotools CI'
 on:
   workflow_call:
     inputs:
+      ref:
+        description: 'Git ref (branch, tag, or SHA) to check out. Defaults to the calling workflow''s ref.'
+        required: false
+        type: string
+        default: ''
       configure-command:
         description: 'Full ./configure invocation (may include env vars).'
         required: false
@@ -100,6 +105,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Cache apt packages
         uses: actions/cache@v4
