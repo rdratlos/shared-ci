@@ -168,15 +168,21 @@ jobs:
         shell: bash
         run: ${{ inputs.build-command }}
 
+      - name: Archive build tree
+        # actions/upload-artifact does not preserve executable bits, so pack
+        # the tree into a tarball (which does) and upload that instead.
+        if: always()
+        shell: bash
+        run: tar -cf build-tree.tar --exclude=build-tree.tar .
+
       - name: Upload build tree
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact-name }}
-          path: .
+          path: build-tree.tar
           retention-days: 1
           if-no-files-found: ignore
-          include-hidden-files: true
 
   test:
     name: 'Test'
@@ -193,6 +199,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.artifact-name }}
+
+      - name: Extract build tree
+        shell: bash
+        run: tar -xf build-tree.tar && rm build-tree.tar
 
       - name: Cache apt packages
         uses: actions/cache@v4
