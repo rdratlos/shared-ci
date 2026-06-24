@@ -1,1 +1,290 @@
-IyBSZXVzYWJsZSB3b3JrZmxvdyBmb3IgQy9DKysgcHJvamVjdHMgdXNpbmcgR05VIEF1dG90b29scy4KIwojIEFic3RyYWN0aW9uIGNob2ljZXM6CiMgICAtIFNwbGl0IGludG8gdHdvIGpvYnMgKGJ1aWxkLCB0ZXN0KSBzbyB0ZXN0IG1hdHJpY2VzIGNhbiBzY2FsZSBpbmRlcGVuZGVudGx5CiMgICAgIGFuZCBidWlsZCBhcnRpZmFjdHMgYXJlIHNoYXJlZCBiZXR3ZWVuIHRoZW0uCiMgICAtIFRoZSBidWlsZCB0cmVlIGlzIHVwbG9hZGVkIGFzIGFuIGFydGlmYWN0IGFuZCBkb3dubG9hZGVkIGJ5IHRoZSB0ZXN0IGpvYiwKIyAgICAgYXZvaWRpbmcgYSBzZWNvbmQgY29uZmlndXJlICsgY29tcGlsZSBjeWNsZS4KIyAgIC0gQm9vdHN0cmFwIGlzIGF1dG8tZGV0ZWN0ZWQ6IC4vYm9vdHN0cmFwID4gLi9hdXRvZ2VuLnNoID4gYXV0b3JlY29uZiAtZmkuCiMgICAtIFZhbGdyaW5kIGlzIG9wdC1pbiB2aWEgYGVuYWJsZS12YWxncmluZGAuCiMgICAtIFNldHVwIHN0ZXBzIGFyZSBpbmxpbmVkIGhlcmUgYmVjYXVzZSBgdXNlczogb3JnL3JlcG8vLmdpdGh1Yi93b3JrZmxvd3MvLi4uYAojICAgICBjYW5ub3QgcmVmZXJlbmNlIHNpYmxpbmcgY29tcG9zaXRlIGFjdGlvbnMgd2l0aCByZWxhdGl2ZSBgLi9gIHBhdGhzLgojICAgICBDb25zdW1lcnMgd2hvIHdhbnQgdGhlIGNvbXBvc2l0ZSBhY3Rpb24gZGlyZWN0bHkgc2hvdWxkIGNvcHkgaXQgaW50byB0aGVpcgojICAgICByZXBvJ3MgYC5naXRodWIvYWN0aW9ucy9gIGRpcmVjdG9yeSBvciByZWZlcmVuY2UgaXQgdmlhIGV4dGVybmFsIHBhdGguCgpuYW1lOiAnQy9DKysgQXV0b3RvbHMgQ0knCgpvbjoKICB3b3JrZmxvd19jYWxsOgogICAgaW5wdXRzOgogICAgICByZWY6CiAgICAgICAgZGVzY3JpcHRpb246ICdHaXQgcmVmIChicmFuY2gsIHRhZywgb3IgU0hBKSB0byBjaGVjayBvdXQuIERlZmF1bHRzIHRvIHRoZSBjYWxsaW5nIHdvcmtmbG93JycgcmVmLicKICAgICAgICByZXF1aXJlZDogZmFsc2UKICAgICAgICB0eXBlOiBzdHJpbmcKICAgICAgICBkZWZhdWx0OiAnJwogICAgICBjb25maWd1cmUtY29tbWFuZDoKICAgICAgICBkZXNjcmlwdGlvbjogJ0Z1bGwgLi9jb25maWd1cmUgaW52b2NhdGlvbiAobWF5IGluY2x1ZGUgZW52IHZhcnMpLicKICAgICAgICByZXF1aXJlZDogZmFsc2UKICAgICAgICB0eXBlOiBzdHJpbmcKICAgICAgICBkZWZhdWx0OiAnLi9jb25maWd1cmUnCiAgICAgIGJ1aWxkLWNvbW1hbmQ6CiAgICAgICAgZGVzY3JpcHRpb246ICdDb21tYW5kIHRvIGNvbXBpbGUgdGhlIHByb2plY3QuJwogICAgICAgIHJlcXVpcmVkOiBmYWxzZQogICAgICAgIHR5cGU6IHN0cmluZwogICAgICAgIGRlZmF1bHQ6ICdtYWtlIC1qMicKICAgICAgdGVzdC1jb21tYW5kOgogICAgICAgIGRlc2NyaXB0aW9uOiAnQ29tbWFuZCB0byBydW4gdW5pdCB0ZXN0cy4nCiAgICAgICAgcmVxdWlyZWQ6IGZhbHNlCiAgICAgICAgdHlwZTogc3RyaW5nCiAgICAgICAgZGVmYXVsdDogJ21ha2UgY2hlY2snCiAgICAgIHRlc3Qtd29ya2luZy1kaXJlY3Rvcnk6CiAgICAgICAgZGVzY3JpcHRpb246ICdTdWJkaXJlY3RvcnkgdG8gY2QgaW50byBiZWZvcmUgcnVubmluZyB0ZXN0cy4nCiAgICAgICAgcmVxdWlyZWQ6IGZhbHNlCiAgICAgICAgdHlwZTogc3RyaW5nCiAgICAgICAgZGVmYXVsdDogJycKICAgICAgZW5hYmxlLXZhbGdyaW5kOgogICAgICAgIGRlc2NyaXB0aW9uOiAnUnVuIFZhbGdyaW5kIGNoZWNrcyBhZnRlciBzdGFuZGFyZCB0ZXN0cy4nCiAgICAgICAgcmVxdWlyZWQ6IGZhbHNlCiAgICAgICAgdHlwZTogYm9vbGVhbgogICAgICAgIGRlZmF1bHQ6IGZhbHNlCiAgICAgIHZhbGdyaW5kLWNvbW1hbmQ6CiAgICAgICAgZGVzY3JpcHRpb246ICdWYWxncmluZCB0ZXN0IGNvbW1hbmQuJwogICAgICAgIHJlcXVpcmVkOiBmYWxzZQogICAgICAgIHR5cGU6IHN0cmluZwogICAgICAgIGRlZmFhdWx0OiAnbWFrZSBjaGVjay12YWxncmluZCcKICAgICAgYm9vdHN0cmFwLWNvbW1hbmQ6CiAgICAgICAgZGVzY3JpcHRpb246ICdFeHBsaWNpdCBib290c3RyYXAgY29tbWFuZCAoZW1wdHkgPSBhdXRvLWRldGVjdCkuJwogICAgICAgIHJlcXVpcmVkOiBmYWxzZQogICAgICAgIHR5cGU6IHN0cmluZwogICAgICAgIGRlZmF1bHQ6ICcnCiAgICAgIGFydGlmYWN0LW5hbWU6CiAgICAgICAgZGVzY3JpcHRpb246ICdOYW1lIHByZWZpeCBmb3IgdGhlIGJ1aWxkIGFydGlmYWN0LicKICAgICAgICByZXF1aXJlZDogZmFsc2UKICAgICAgICB0eXBlOiBzdHJpbmcKICAgICAgICBkZWZhdWx0OiAnYnVpbGQtdHJlZScKICAgICAgcnVucy1vbjoKICAgICAgICBkZXNjcmlwdGlvbjogJ0dpdEh1YiBBY3Rpb25zIHJ1bm5lciBsYWJlbC4nCiAgICAgICAgcmVxdWlyZWQ6IGZhbHNlCiAgICAgICAgdHlwZTogc3RyaW5nCiAgICAgICAgZGVmYXVsdDogJ3VidW50dS1sYXRlc3QnCiAgICAgIGluc3RhbGwtdmFsZ3JpbmQ6CiAgICAgICAgZGVzY3JpcHRpb246ICdJbnN0YWxsIFZhbGdyaW5kIGluIHRoZSBidWlsZCBlbnZpcm9ubWVudC4nCiAgICAgICAgcmVxdWlyZWQ6IGZhbHNlCiAgICAgICAgdHlwZTogYm9vbGVhbgogICAgICAgIGRlZmF1bHQ6IGZhbHNlCiAgICAgIGluc3RhbGwtY2xhbmctdG9vbHM6CiAgICAgICAgZGVzY3JpcHRpb246ICdJbnN0YWxsIGNsYW5nLXRpZHkgYW5kIGNsYW5nLWZvcm1hdC4nCiAgICAgICAgcmVxdWlyZWQ6IGZhbHNlCiAgICAgICAgdHlwZTogYm9vbGVhbgogICAgICAgIGRlZmF1bHQ6IGZhbHNlCiAgICAgIHByb2plY3QtZGVwczoKICAgICAgICBkZXNjcmlwdGlvbjogJ0V4dHJhIGFwdCBwYWNrYWdlcyAoc3BhY2Utc2VwYXJhdGVkKS4nCiAgICAgICAgcmVxdWlyZWQ6IGZhbHNlCiAgICAgICAgdHlwZTogc3RyaW5nCiAgICAgICAgZGVmYXVsdDogJycKCiAgICAjIEV4cG9zZWQgdG8gY29uc3VtZXJzIGZvciBjdXN0b20gcmVwb3J0aW5nIChlLmcuIHRyaS1zdGF0ZSBjaGVjayBydW5zKS4KICAgIG91dHB1dHM6CiAgICAgIGJ1aWxkLXJlc3VsdDoKICAgICAgICBkZXNjcmlwdGlvbjogJ091dGNvbWUgb2YgdGhlIGJ1aWxkIGpvYiAoc3VjY2Vzcy9mYWlsdXJlKS4nCiAgICAgICAgdmFsdWU6ICR7eyBqb2JzLmJ1aWxkLm91dHB1dHMucmVzdWx0IH19CiAgICAgIHRlc3QtcmVzdWx0OgogICAgICAgIGRlc2NyaXB0aW9uOiAnQ29tYmluZWQgb3V0Y29tZSBvZiB0aGUgdGVzdCBqb2IsIGluY2x1ZGluZyBWYWxncmluZCBpZiBlbmFibGVkIChzdWNjZXNzL2ZhaWx1cmUpLicKICAgICAgICB2YWx1ZTogJHt7IGpvYnMudGVzdC5vdXRwdXRzLnJlc3VsdCB9fQogICAgICB1bml0LXRlc3QtcmVzdWx0OgogICAgICAgIGRlc2NyaXB0aW9uOiAnT3V0Y29tZSBvZiB0aGUgdW5pdC10ZXN0IHN0ZXAgYWxvbmUsIGV4Y2x1ZGluZyBWYWxncmluZCAoc3VjY2Vzcy9mYWlsdXJlKS4nCiAgICAgICAgdmFsdWU6ICR7eyBqb2JzLnRlc3Qub3V0cHV0cy51bml0LXRlc3QtcmVzdWx0IH19CiAgICAgIHZhbGdyaW5kLXJlc3VsdDoKICAgICAgICBkZXNjcmlwdGlvbjogJ091dGNvbWUgb2YgdGhlIFZhbGdyaW5kIGNoZWNrcyBhbG9uZSAoc3VjY2Vzcy9mYWlsdXJlL3NraXBwZWQpLicKICAgICAgICB2YWx1ZTogJHt7IGpvYnMudGVzdC5vdXRwdXRzLnZhbGdyaW5kLXJlc3VsdCB9fQoKam9iczoKICBidWlsZDoKICAgIG5hbWU6ICdCdWlsZCcKICAgIHJ1bnMtb246ICR7eyBpbnB1dHMucnVucy1vbiB9fQogICAgcGVybWlzc2lvbnM6CiAgICAgIGNvbnRlbnRzOiByZWFkCiAgICBvdXRwdXRzOgogICAgICAjIFByb3BhZ2F0ZSB0aGUgYnVpbGQgc3RlcCdzIG91dGNvbWUgdG8gdGhlIHdvcmtmbG93IG91dHB1dC4KICAgICAgcmVzdWx0OiAke3sgc3RlcHMuY29tcGlsZS5vdXRwdXRzLm91dGNvbWUgfX0KCiAgICBzdGVwczoKICAgICAgLSBuYW1lOiBDaGVja291dAogICAgICAgIHVzZXM6IGFjdGlvbnMvY2hlY2tvdXRANAogICAgICAgIHdpdGg6CiAgICAgICAgICByZWY6ICR7eyBpbnB1dHMucmVmIHx8IGdpdGh1Yi5yZWYgfX0KCiAgICAgIC0gbmFtZTogQ2FjaGUgYXB0IHBhY2thZ2VzCiAgICAgICAgdXNlczogYWN0aW9ucy9jYWNoZUB2NAogICAgICAgIHdpdGg6CiAgICAgICAgICBwYXRoOiAvdmFyL2NhY2hlL2FwdC9hcmNoaXZlcwogICAgICAgICAga2V5OiAkeyBydW5uZXIub3MgfS1hcHQtYXV0b3Rvb2xzLXN0YXRpYwogICAgICAgICAgbG9va3VwLW9ubHk6IHRydWUKCiAgICAgIC0gbmFtZTogSW5zdGFsbCBBdXRvdG9vbHMgdG9vbGNoYWluCiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIHN1ZG8gYXB0LWdldCB1cGRhdGUKICAgICAgICAgIHN1ZG8gYXB0LWdldCBpbnN0YWxsIC15IC0tbm8taW5zdGFsbC1yZWNvbW1lbmRzIFwKICAgICAgICAgICAgYnVpbGQtZXNzZW50aWFsIGF1dG9tYWtlIGF1dG9jb25mIGxpYnRvb2wgcGtnLWNvbmZpZyBcCiAgICAgICAgICAgIGZsZXggYmlzb24gZ2F3awoKICAgICAgLSBuYW1lOiBJbnN0YWxsIHByb2plY3Qtc3BlY2lmaWMgZGVwZW5kZW5jaWVzCiAgICAgICAgaWY6ICR7eyBpbnB1dHMucHJvamVjdC1kZXBzICE9ICcnIH19CiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIHN1ZG8gYXB0LWdldCBpbnN0YWxsIC15IC0tbm8taW5zdGFsbC1yZWNvbW1lbmRzICR7eyBpbnB1dHMucHJvamVjdC1kZXBzIH19CgogICAgICAtIG5hbWU6IEluc3RhbGwgVmFsZ3JpbmQKICAgICAgICBpZjogJHt7IGlucHV0cy5pbnN0YWxsLXZhbGdyaW5kIH19CiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIHN1ZG8gYXB0LWdldCBpbnN0YWxsIC15IC0tbm8taW5zdGFsbC1yZWNvbW1lbmRzIHZhbGdyaW5kCgogICAgICAtIG5hbWU6IEluc3RhbGwgQ2xhbmcgc3RhdGljIGFuYWx5c2lzIHRvb2xzCiAgICAgICAgaWY6ICR7eyBpbnB1dHMuaW5zdGFsbC1jbGFuZy10b29scyB9fQogICAgICAgIHNoZWxsOiBiYXNoCiAgICAgICAgcnVuOiB8CiAgICAgICAgICBzdWRvIGFwdC1nZXQgaW5zdGFsbCAteSAtLW5vLWluc3RhbGwtcmVjb21tZW5kcyBjbGFuZy10aWR5IGNsYW5nLWZvcm1hdAoKICAgICAgLSBuYW1lOiBCb290c3RyYXAgYnVpbGQgc3lzdGVtCiAgICAgICAgaWY6ICR7eyBpbnB1dHMuYm9vdHN0cmFwLWNvbW1hbmQgIT0gJycgfX0KICAgICAgICBzaGVsbDogYmFzaAogICAgICAgIHJ1bjogJHt7IGlucHV0cy5ib290c3RyYXAtY29tbWFuZCB9fQoKICAgICAgLSBuYW1lOiBBdXRvLWRldGVjdCBib290c3RyYXAKICAgICAgICBpZjogJHt7IGlucHV0cy5ib290c3RyYXAtY29tbWFuZCA9PSAnJyB9fQogICAgICAgIHNoZWxsOiBiYXNoCiAgICAgICAgcnVuOiB8CiAgICAgICAgICBpZiBbIC14IC4vYm9vdHN0cmFwIF07IHRoZW4KICAgICAgICAgICAgLi9ib290c3RyYXAKICAgICAgICAgIGVsaWYgWyAtZiAuL2F1dG9nZW4uc2ggXTsgdGhlbgogICAgICAgICAgICBzaCAuL2F1dG9nZW4uc2gKICAgICAgICAgIGVsc2UKICAgICAgICAgICAgYXV0b3JlY29uZiAtZmkKICAgICAgICAgIGZpCgogICAgICAtIG5hbWU6IENvbmZpZ3VyZQogICAgICAgIGlkOiBjb25maWd1cmUKICAgICAgICBzaGVsbDogYmFzaAogICAgICAgIHJ1bjogJHt7IGlucHV0cy5jb25maWd1cmUtY29tbWFuZCB9fQoKICAgICAgLSBuYW1lOiBDb21waWxlCiAgICAgICAgaWQ6IGNvbXBpbGUKICAgICAgICBzaGVsbDogYmFzaAogICAgICAgIHJ1bjogJHt7IGlucHV0cy5idWlsZC1jb21tYW5kIH19CgogICAgICAtIG5hbWU6IEFyY2hpdmUgYnVpbGQgdHJlZQogICAgICAgICMgYWN0aW9ucy91cGxvYWQtYXJ0aWZhY3QgZG9lcyBub3QgcHJlc2VydmUgZXhlY3V0YWJsZSBiaXRzLCBzbyBwYWNrCiAgICAgICAgIyB0aGUgdHJlZSBpbnRvIGEgdGFyYmFsbCAod2hpY2ggZG9lcykgYW5kIHVwbG9hZCB0aGF0IGluc3RlYWQuCiAgICAgICAgaWY6IGFsd2F5cygpCiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHRhciAtY2YgYnVpbGQtdHJlZS50YXIgLS1leGNsdWRlPWJ1aWxkLXRyZWUudGFyIC4KCiAgICAgIC0gbmFtZTogVXBsb2FkIGJ1aWxkIHRyZWUKICAgICAgICBpZjogYWx3YXlzKCkKICAgICAgICB1c2VzOiBhY3Rpb25zL3VwbG9hZC1hcnRpZmFjdEB2NAogICAgICAgIHdpdGg6CiAgICAgICAgICBuYW1lOiAke3sgaW5wdXRzLmFydGlmYWN0LW5hbWUgfX0KICAgICAgICAgIHBhdGg6IGJ1aWxkLXRyZWUudGFyCiAgICAgICAgICByZXRlbnRpb24tZGF5czogMQogICAgICAgICAgaWYtbm8tZmlsZXMtZm91bmQ6IGlnbm9yZQoKICB0ZXN0OgogICAgbmFtZTogJ1RlcyBxJwogICAgbmVlZHM6IGJ1aWxkCiAgICBydW5zLW9uOiAke3sgaW5wdXRzLnJ1bnMtb24gfX0KICAgIHBlcm1pc3Npb25zOgogICAgICBjb250ZW50czogcmVhZAogICAgb3V0cHV0czoKICAgICAgIyBQcm9wYWdhdGUgdGhlIHRlc3Qgc3RlcCdzIG91dGNvbWUgdG8gdGhlIHdvcmtmbG93IG91dHB1dC4KICAgICAgcmVzdWx0OiAke3sgc3RlcHMuYWdncmVnYXRlLm91dHB1dHMub3V0Y29tZSB9fQogICAgICB1bml0LXRlc3QtcmVzdWx0OiAke3sgc3RlcHMuYWdncmVnYXRlLm91dHB1dHMudW5pdC10ZXN0LW91dGNvbWUgfX0KICAgICAgdmFsZ3JpbmQtcmVzdWx0OiAkeyBzdGVwcy5hZ2dyZWdhdGUub3V0cHV0cy52YWxncmluZC1vdXRjb21lIH19CgogICAgc3RlcHM6CiAgICAgIC0gbmFtZTogRG93bmxvYWQgYnVpbGQgdHJlZQogICAgICAgIHVzZXM6IGFjdGlvbnMvZG93bmxvYWQtYXJ0aWZhY3RAdjQKICAgICAgICB3aXRoOgogICAgICAgICAgbmFtZTogJHt7IGlucHV0cy5hcnRpZmFjdC1uYW1lIH19CgogICAgICAtIG5hbWU6IEV4dHJhY3QgYnVpbGQgdHJlZQogICAgICAgIHNoZWxsOiBiYXNoCiAgICAgICAgcnVuOiB0YXIgLXhmIGJ1aWxkLXRyZWUudGFyICYmIHJtIGJ1aWxkLXRyZWUudGFyCgogICAgICAtIG5hbWU6IENhY2hlIGFwdCBwYWNrYWdlcwogICAgICAgIHVzZXM6IGFjdGlvbnMvY2FjaGVAdjQKICAgICAgICB3aXRoOgogICAgICAgICAgcGF0aDogL3Zhci9jYWNoZS9hcHQvYXJjaGl2ZXMKICAgICAgICAgIGtleTogJHsgcnVubmVyLm9zIH0tYXB0LWF1dG90b29scy1zdGF0aWMKICAgICAgICAgIGxvb2t1cC1vbmx5OiB0cnVlCgogICAgICAtIG5hbWU6IEluc3RhbGwgQXV0b3Rvb2xzIHRvb2xjaGFpbgogICAgICAgIHNoZWxsOiBiYXNoCiAgICAgICAgcnVuOiB8CiAgICAgICAgICBzdWRvIGFwdC1nZXQgdXBkYXRlCiAgICAgICAgICBzdWRvIGFwdC1nZXQgaW5zdGFsbCAteSAtLW5vLWluc3RhbGwtcmVjb21tZW5kcyBcCiAgICAgICAgICAgIGJ1aWxkLWVzc2VudGlhbCBhdXRvbWFrZSBhdXRvY29uZiBsaWJ0b29sIHBrZy1jb25maWcgXAogICAgICAgICAgICBmbGV4IGJpc29uIGdhd2sKCiAgICAgIC0gbmFtZTogSW5zdGFsbCBwcm9qZWN0LXNwZWNpZmljIGRlcGVuZGVuY2llcwogICAgICAgIGlmOiAkeyBpbnB1dHMucHJvamVjdC1kZXBzICE9ICcnIH19CiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIHN1ZG8gYXB0LWdldCBpbnN0YWxsIC15IC0tbm8taW5zdGFsbC1yZWNvbW1lbmRzICR7eyBpbnB1dHMucHJvamVjdC1kZXBzIH19CgogICAgICAtIG5hbWU6IEluc3RhbGwgVmFsZ3JpbmQKICAgICAgICBpZjogJHt7IGlucHV0cy5lbmFibGUtdmFsZ3JpbmQgfX0KICAgICAgICBzaGVsbDogYmFzaAogICAgICAgIHJ1bjogfAogICAgICAgICAgc3VkbyBhcHQtZ2V0IGluc3RhbGwgLXkgLS1uby1pbnN0YWxsLXJlY29tbWVuZHMgdmFsZ3JpbmQKCiAgICAgIC0gbmFtZTogUnVuIHVuaXQgdGVzdHMKICAgICAgICBpZDogdW5pdC10ZXN0CiAgICAgICAgY29udGludWUtb24tZXJyb3I6IHRydWUKICAgICAgICBzaGVsbDogYmFzaAogICAgICAgIHJ1bjogfAogICAgICAgICAgaWYgWyAtbiAiJHt7IGlucHV0cy50ZXN0LXdvcmtpbmctZGlyZWN0b3J5IH19IiBdOyB0aGVuCiAgICAgICAgICAgIGNkICR7eyBpbnB1dHMudGVzdC13b3JraW5nLWRpcmVjdG9yeSB9fQogICAgICAgICAgZmkKICAgICAgICAgICR7eyBpbnB1dHMudGVzdC1jb21tYW5kIH19CgogICAgICAtIG5hbWU6IFJ1biBWYWxncmluZCBjaGVja3MKICAgICAgICBpZjogJHt7IGlucHV0cy5lbmFibGUtdmFsZ3JpbmQgJiYgc3VjY2VzcygpIH19CiAgICAgICAgaWQ6IHZhbGdyaW5kLXRlc3QKICAgICAgICBjb250aW51ZS1vbi1lcnJvcjogdHJ1ZQogICAgICAgIHNoZWxsOiBiYXNoCiAgICAgICAgcnVuOiB8CiAgICAgICAgICBpZiBbIC1uICIke3sgaW5wdXRzLnRlc3Qtd29ya2luZy1kaXJlY3RvcnkgfX0iIF07IHRoZW4KICAgICAgICAgICAgY2QgJHt7IGlucHV0cy50ZXN0LXdvcmtpbmctZGlyZWN0b3J5IH19CiAgICAgICAgICBmaQogICAgICAgICAgJHt7IGlucHV0cy52YWxncmluZC1jb21tYW5kIH19CgogICAgICAtIG5hbWU6IEFnZ3JlZ2F0ZSB0ZXN0IG91dGNvbWUKICAgICAgICBpZDogYWdncmVnYXRlCiAgICAgICAgaWY6IGFsd2F5cygpCiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIHRlc3Rfb3V0Y29tZT0iJHt7IHN0ZXBzLnVuaXQtdGVzdC5vdXRjb21lIH19IgogICAgICAgICAgdmdfb3V0Y29tZT0iJHt7IHN0ZXBzLnZhbGdyaW5kLXRlc3Qub3V0Y29tZSB9fSIKICAgICAgICAgIHJlc3VsdD0ic3VjY2VzcyIKCiAgICAgICAgICBpZiBbICIkdGVzdF9vdXRjb21lIiA9ICJmYWlsdXJlIiBdOyB0aGVuCiAgICAgICAgICAgIGVjaG8gIjo6ZXJyb3IgdGl0bGU9VGVzdHMgRmFpbGVkOjpcYCR7eyBpbnB1dHMudGVzdC1jb21tYW5kIH19XGAgcmVwb3J0ZWQgZmFpbHVyZXMuIgogICAgICAgICAgICByZXN1bHQ9ImZhaWx1cmUiCiAgICAgICAgICBmaQogICAgICAgICAgaWYgWyAiJHZnX291dGNvbWUiID0gImZhaWx1cmUiIF07IHRoZW4KICAgICAgICAgICAgZWNobyAiOjplcnJvciB0aXRsZT1WYWxncmluZCBGYWlsZWQ6OlxgJHt7IGlucHV0cy52YWxncmluZC1jb21tYW5kIH19XGAgZm91bmQgbWVtb3J5IGlzc3Vlcy4iCiAgICAgICAgICAgIHJlc3VsdD0iZmFpbHVyZSIKICAgICAgICAgIGZpCiAgICAgICAgICBpZiBbICIkcmVzdWx0IiA9ICJzdWNjZXNzIiBdOyB0aGVuCiAgICAgICAgICAgIGVjaG8gIjo6bm90aWNlIHRpdGxlPUFsbCBDaGVja3MgUGFzc2VkOjpUZXN0cyBhbmQgdmFsaWRhdGlvbiBjb21wbGV0ZWQgc3VjY2Vzc2Z1bGx5LiIKICAgICAgICAgIGZpCiAgICAgICAgICBlY2hvICJvdXRjb21lPSRyZXN1bHQiID4+ICIkR0lUSFVCX09VVFBVVCIKICAgICAgICAgIGVjaG8gInVuaXQtdGVzdC1vdXRjb21lPSR0ZXN0X291dGNvbWUiID4+ICIkR0lUSFVCX09VVFBVVCIKICAgICAgICAgIGVjaG8gInZhbGdyaW5kLW91dGNvbWU9JHt2Z19vdXRjb21lOi1za2lwcGVkfSIgPj4gIiRHSVRIVUJfT1VUUFVUIgoKICAgICAgLSBuYW1lOiBGYWlsIGpvYiBpZiB0ZXN0cyBvciBWYWxncmluZCBmYWlsZWQKICAgICAgICBpZjogc3RlcHMuYWdncmVnYXRlLm91dHB1dHMub3V0Y29tZSA9PSAnZmFpbHVyZScKICAgICAgICBzaGVsbDogYmFzaAogICAgICAgIHJ1bjogZXhpdCAxCg==
+# Reusable workflow for C/C++ projects using GNU Autotools.
+#
+# Abstraction choices:
+#   - Split into two jobs (build, test) so test matrices can scale independently
+#     and build artifacts are shared between them.
+#   - The build tree is uploaded as an artifact and downloaded by the test job,
+#     avoiding a second configure + compile cycle.
+#   - Bootstrap is auto-detected: ./bootstrap > ./autogen.sh > autoreconf -fi.
+#   - Valgrind is opt-in via `enable-valgrind`.
+#   - Setup steps are inlined here because `uses: org/repo/.github/workflows/...`
+#     cannot reference sibling composite actions with relative `./` paths.
+#     Consumers who want the composite action directly should copy it into their
+#     repo's `.github/actions/` directory or reference it via external path.
+
+name: 'C/C++ Autotools CI'
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or SHA) to check out. Defaults to the calling workflow''s ref.'
+        required: false
+        type: string
+        default: ''
+      configure-command:
+        description: 'Full ./configure invocation (may include env vars).'
+        required: false
+        type: string
+        default: './configure'
+      build-command:
+        description: 'Command to compile the project.'
+        required: false
+        type: string
+        default: 'make -j2'
+      test-command:
+        description: 'Command to run unit tests.'
+        required: false
+        type: string
+        default: 'make check'
+      test-working-directory:
+        description: 'Subdirectory to cd into before running tests.'
+        required: false
+        type: string
+        default: ''
+      enable-valgrind:
+        description: 'Run Valgrind checks after standard tests.'
+        required: false
+        type: boolean
+        default: false
+      valgrind-command:
+        description: 'Valgrind test command.'
+        required: false
+        type: string
+        default: 'make check-valgrind'
+      bootstrap-command:
+        description: 'Explicit bootstrap command (empty = auto-detect).'
+        required: false
+        type: string
+        default: ''
+      artifact-name:
+        description: 'Name prefix for the build artifact.'
+        required: false
+        type: string
+        default: 'build-tree'
+      runs-on:
+        description: 'GitHub Actions runner label.'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      install-valgrind:
+        description: 'Install Valgrind in the build environment.'
+        required: false
+        type: boolean
+        default: false
+      install-clang-tools:
+        description: 'Install clang-tidy and clang-format.'
+        required: false
+        type: boolean
+        default: false
+      project-deps:
+        description: 'Extra apt packages (space-separated).'
+        required: false
+        type: string
+        default: ''
+
+    # Exposed to consumers for custom reporting (e.g. tri-state check runs).
+    outputs:
+      build-result:
+        description: 'Outcome of the build job (success/failure).'
+        value: ${{ jobs.build.outputs.result }}
+      test-result:
+        description: 'Combined outcome of the test job, including Valgrind if enabled (success/failure).'
+        value: ${{ jobs.test.outputs.result }}
+      unit-test-result:
+        description: 'Outcome of the unit-test step alone, excluding Valgrind (success/failure).'
+        value: ${{ jobs.test.outputs.unit-test-result }}
+      valgrind-result:
+        description: 'Outcome of the Valgrind checks alone (success/failure/skipped).'
+        value: ${{ jobs.test.outputs.valgrind-result }}
+
+jobs:
+  build:
+    name: 'Build'
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+    outputs:
+      # Propagate the build step's outcome to the workflow output.
+      result: ${{ steps.compile.outputs.outcome }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-autotools-static
+          lookup-only: true
+
+      - name: Install Autotools toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential automake autoconf libtool pkg-config \
+            flex bison gawk
+
+      - name: Install project-specific dependencies
+        if: ${{ inputs.project-deps != '' }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+
+      - name: Install Valgrind
+        if: ${{ inputs.install-valgrind }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends valgrind
+
+      - name: Install Clang static analysis tools
+        if: ${{ inputs.install-clang-tools }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends clang-tidy clang-format
+
+      - name: Bootstrap build system
+        if: ${{ inputs.bootstrap-command != '' }}
+        shell: bash
+        run: ${{ inputs.bootstrap-command }}
+
+      - name: Auto-detect bootstrap
+        if: ${{ inputs.bootstrap-command == '' }}
+        shell: bash
+        run: |
+          if [ -x ./bootstrap ]; then
+            ./bootstrap
+          elif [ -f ./autogen.sh ]; then
+            sh ./autogen.sh
+          else
+            autoreconf -fi
+          fi
+
+      - name: Configure
+        id: configure
+        shell: bash
+        run: ${{ inputs.configure-command }}
+
+      - name: Compile
+        id: compile
+        shell: bash
+        run: ${{ inputs.build-command }}
+
+      - name: Archive build tree
+        # actions/upload-artifact does not preserve executable bits, so pack
+        # the tree into a tarball (which does) and upload that instead.
+        if: always()
+        shell: bash
+        run: tar -cf build-tree.tar --exclude=build-tree.tar .
+
+      - name: Upload build tree
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: build-tree.tar
+          retention-days: 1
+          if-no-files-found: ignore
+
+  test:
+    name: 'Test'
+    needs: build
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+    outputs:
+      # Propagate the test step's outcome to the workflow output.
+      result: ${{ steps.aggregate.outputs.outcome }}
+      unit-test-result: ${{ steps.aggregate.outputs.unit-test-outcome }}
+      valgrind-result: ${{ steps.aggregate.outputs.valgrind-outcome }}
+
+    steps:
+      - name: Download build tree
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+
+      - name: Extract build tree
+        shell: bash
+        run: tar -xf build-tree.tar && rm build-tree.tar
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-autotools-static
+          lookup-only: true
+
+      - name: Install Autotools toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential automake autoconf libtool pkg-config \
+            flex bison gawk
+
+      - name: Install project-specific dependencies
+        if: ${{ inputs.project-deps != '' }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+
+      - name: Install Valgrind
+        if: ${{ inputs.enable-valgrind }}
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends valgrind
+
+      - name: Run unit tests
+        id: unit-test
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.test-working-directory }}" ]; then
+            cd ${{ inputs.test-working-directory }}
+          fi
+          ${{ inputs.test-command }}
+
+      - name: Run Valgrind checks
+        if: ${{ inputs.enable-valgrind && success() }}
+        id: valgrind-test
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.test-working-directory }}" ]; then
+            cd ${{ inputs.test-working-directory }}
+          fi
+          ${{ inputs.valgrind-command }}
+
+      - name: Aggregate test outcome
+        id: aggregate
+        if: always()
+        shell: bash
+        run: |
+          test_outcome="${{ steps.unit-test.outcome }}"
+          vg_outcome="${{ steps.valgrind-test.outcome }}"
+          result="success"
+
+          if [ "$test_outcome" = "failure" ]; then
+            echo "::error title=Tests Failed::\`${{ inputs.test-command }}\` reported failures."
+            result="failure"
+          fi
+          if [ "$vg_outcome" = "failure" ]; then
+            echo "::error title=Valgrind Failed::\`${{ inputs.valgrind-command }}\` found memory issues."
+            result="failure"
+          fi
+          if [ "$result" = "success" ]; then
+            echo "::notice title=All Checks Passed::Tests and validation completed successfully."
+          fi
+          echo "outcome=$result" >> "$GITHUB_OUTPUT"
+          echo "unit-test-outcome=$test_outcome" >> "$GITHUB_OUTPUT"
+          echo "valgrind-outcome=${vg_outcome:-skipped}" >> "$GITHUB_OUTPUT"
+
+      - name: Fail job if tests or Valgrind failed
+        if: steps.aggregate.outputs.outcome == 'failure'
+        shell: bash
+        run: exit 1
