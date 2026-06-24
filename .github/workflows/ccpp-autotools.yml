@@ -89,8 +89,14 @@ on:
         description: 'Outcome of the build job (success/failure).'
         value: ${{ jobs.build.outputs.result }}
       test-result:
-        description: 'Outcome of the test job (success/failure).'
+        description: 'Combined outcome of the test job, including Valgrind if enabled (success/failure).'
         value: ${{ jobs.test.outputs.result }}
+      unit-test-result:
+        description: 'Outcome of the unit-test step alone, excluding Valgrind (success/failure).'
+        value: ${{ jobs.test.outputs.unit-test-result }}
+      valgrind-result:
+        description: 'Outcome of the Valgrind checks alone (success/failure/skipped).'
+        value: ${{ jobs.test.outputs.valgrind-result }}
 
 jobs:
   build:
@@ -193,6 +199,8 @@ jobs:
     outputs:
       # Propagate the test step's outcome to the workflow output.
       result: ${{ steps.aggregate.outputs.outcome }}
+      unit-test-result: ${{ steps.aggregate.outputs.unit-test-outcome }}
+      valgrind-result: ${{ steps.aggregate.outputs.valgrind-outcome }}
 
     steps:
       - name: Download build tree
@@ -273,6 +281,8 @@ jobs:
             echo "::notice title=All Checks Passed::Tests and validation completed successfully."
           fi
           echo "outcome=$result" >> "$GITHUB_OUTPUT"
+          echo "unit-test-outcome=$test_outcome" >> "$GITHUB_OUTPUT"
+          echo "valgrind-outcome=${vg_outcome:-skipped}" >> "$GITHUB_OUTPUT"
 
       - name: Fail job if tests or Valgrind failed
         if: steps.aggregate.outputs.outcome == 'failure'
