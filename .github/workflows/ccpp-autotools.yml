@@ -86,8 +86,14 @@ on:
     # Exposed to consumers for custom reporting (e.g. tri-state check runs).
     outputs:
       build-result:
-        description: 'Outcome of the build job (success/failure).'
+        description: 'Outcome of the build job overall, i.e. configure-result OR compile-result (success/failure).'
         value: ${{ jobs.build.outputs.result }}
+      configure-result:
+        description: 'Outcome of the Configure step alone (success/failure).'
+        value: ${{ jobs.build.outputs.configure-result }}
+      compile-result:
+        description: 'Outcome of the Compile step alone (success/failure/skipped -- skipped if Configure failed).'
+        value: ${{ jobs.build.outputs.compile-result }}
       test-result:
         description: 'Combined outcome of the test job, including Valgrind if enabled (success/failure).'
         value: ${{ jobs.test.outputs.result }}
@@ -119,7 +125,9 @@ jobs:
       contents: read
     outputs:
       # Propagate the build step's outcome to the workflow output.
-      result: ${{ steps.compile.outputs.outcome }}
+      result: ${{ steps.aggregate-build.outputs.outcome }}
+      configure-result: ${{ steps.aggregate-build.outputs.configure-outcome }}
+      compile-result: ${{ steps.aggregate-build.outputs.compile-outcome }}
       duration-seconds: ${{ steps.timing.outputs.duration-seconds }}
 
     steps:
@@ -185,13 +193,34 @@ jobs:
 
       - name: Configure
         id: configure
+        continue-on-error: true
         shell: bash
         run: ${{ inputs.configure-command }}
 
       - name: Compile
         id: compile
+        # Skip rather than let a doomed compile fail too -- keeps Compile's
+        # own outcome meaningful (skipped, not a second failure) when the
+        # real problem was Configure.
+        if: steps.configure.outcome == 'success'
+        continue-on-error: true
         shell: bash
         run: ${{ inputs.build-command }}
+
+      - name: Aggregate build outcome
+        id: aggregate-build
+        if: always()
+        shell: bash
+        run: |
+          configure_outcome="${{ steps.configure.outcome }}"
+          compile_outcome="${{ steps.compile.outcome }}"
+          result="success"
+          if [ "$configure_outcome" = "failure" ] || [ "$compile_outcome" = "failure" ]; then
+            result="failure"
+          fi
+          echo "outcome=$result" >> "$GITHUB_OUTPUT"
+          echo "configure-outcome=$configure_outcome" >> "$GITHUB_OUTPUT"
+          echo "compile-outcome=${compile_outcome:-skipped}" >> "$GITHUB_OUTPUT"
 
       - name: Record build duration
         id: timing
@@ -214,6 +243,11 @@ jobs:
           path: build-tree.tar
           retention-days: 1
           if-no-files-found: ignore
+
+      - name: Fail job if Configure or Compile failed
+        if: ${{ steps.aggregate-build.outputs.outcome == 'failure' }}
+        shell: bash
+        run: exit 1
 
   test:
     name: 'Test'
