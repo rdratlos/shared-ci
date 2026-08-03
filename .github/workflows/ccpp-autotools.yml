@@ -339,6 +339,18 @@ jobs:
         shell: bash
         env:
           RICH_TEST_SUMMARY_FILE: ${{ runner.temp }}/rich-test-summary.md
+          # Passed as env vars and referenced as shell variables below --
+          # deliberately NOT interpolated directly as ${{ inputs.test-command }}
+          # inside this step's own run: script. GitHub Actions splices
+          # ${{ }} expressions into the script text before bash ever sees
+          # it; a test-command/valgrind-command that's a trivial one-liner
+          # is safe that way, but either one can legitimately be an
+          # arbitrary multi-line script (quotes, pipes, $()...), and
+          # splicing that into the middle of *this* step's script gets it
+          # re-parsed as bash here too, corrupting this step. Consuming it
+          # as an env var's runtime value avoids that entirely.
+          TEST_COMMAND: ${{ inputs.test-command }}
+          VALGRIND_COMMAND: ${{ inputs.valgrind-command }}
         run: |
           test_outcome="${{ steps.unit-test.outcome }}"
           vg_outcome="${{ steps.valgrind-test.outcome }}"
@@ -350,12 +362,17 @@ jobs:
           [ -f "$RICH_TEST_SUMMARY_FILE" ] && cat "$RICH_TEST_SUMMARY_FILE" >> "$GITHUB_OUTPUT"
           echo "TEST_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
 
+          # Only the first line goes in the annotation -- the full
+          # command (possibly multi-line) is already visible in the "Run
+          # unit tests"/"Run Valgrind checks" step logs above.
           if [ "$test_outcome" = "failure" ]; then
-            echo "::error title=Tests Failed::\`${{ inputs.test-command }}\` reported failures."
+            first_line=$(printf '%s\n' "$TEST_COMMAND" | head -n1)
+            echo "::error title=Tests Failed::\`$first_line\` (test-command) reported failures. See the 'Run unit tests' step log for the full command and output."
             result="failure"
           fi
           if [ "$vg_outcome" = "failure" ]; then
-            echo "::error title=Valgrind Failed::\`${{ inputs.valgrind-command }}\` found memory issues."
+            first_line=$(printf '%s\n' "$VALGRIND_COMMAND" | head -n1)
+            echo "::error title=Valgrind Failed::\`$first_line\` (valgrind-command) found memory issues. See the 'Run Valgrind checks' step log for the full command and output."
             result="failure"
           fi
           if [ "$result" = "success" ]; then
