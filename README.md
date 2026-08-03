@@ -14,4 +14,31 @@ The application repository relies on a lightweight `.github/workflows/bootstrap.
 >**Platform Migration Note:**
 > Because CI/CD logic is externalized, migrating this project to another platform (e.g., GitLab, Jenkins) involves only replacing the `.github/workflows/bootstrap.yml` file with a `.gitlab-ci.yml` or equivalent configuration. The application codebase remains untouched.
 
+## Reusable Workflows
+
+### `ccpp-autotools.yml` — build + run the test suite
+
+Split into a `build` job and a `test` job (the build tree is archived and
+passed between them). Beyond the plain `build-result`/`test-result`/
+`unit-test-result`/`valgrind-result` outputs, it also exposes:
+
+- `build-duration-seconds` / `test-duration-seconds` — wall-clock time for
+  each job, for consumers building a stage-timing summary.
+- `test-summary` — free-form Markdown, opt-in. If a consumer's
+  `test-command` writes to the path in `$RICH_TEST_SUMMARY_FILE` (an env
+  var this workflow sets before running it), that content is passed
+  through verbatim. Consumers that don't use the convention just get an
+  empty string — this workflow never inspects or parses `test-command`'s
+  output itself, keeping any project-specific test-runner format out of
+  the reusable layer.
+
+### `ccpp-target-compile.yml` — compile a set of specific object targets
+
+For canary-style checks (e.g. "does this still compile under flag set X")
+rather than a full build + test cycle. Publishes a Markdown results table
+to the job summary and a `results` JSON output
+(`{name, label, target, outcome, blocking}` per target) — consumers
+needing GitHub Check runs or other formatting should parse that JSON
+rather than re-deriving results from logs.
+
 

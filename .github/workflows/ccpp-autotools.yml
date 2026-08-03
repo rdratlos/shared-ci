@@ -97,6 +97,19 @@ on:
       valgrind-result:
         description: 'Outcome of the Valgrind checks alone (success/failure/skipped).'
         value: ${{ jobs.test.outputs.valgrind-result }}
+      build-duration-seconds:
+        description: 'Wall-clock seconds spent in the Configure+Compile steps.'
+        value: ${{ jobs.build.outputs.duration-seconds }}
+      test-duration-seconds:
+        description: 'Wall-clock seconds spent running test-command (unit tests only, excluding Valgrind).'
+        value: ${{ jobs.test.outputs.duration-seconds }}
+      test-summary:
+        description: >
+          Free-form Markdown a consumer's test-command may optionally write, for richer
+          reporting than the plain success/failure outputs above. If test-command writes
+          to the file path in $RICH_TEST_SUMMARY_FILE, its content is passed through
+          verbatim here; consumers that don't use the convention get an empty string.
+        value: ${{ jobs.test.outputs.test-summary }}
 
 jobs:
   build:
@@ -107,12 +120,18 @@ jobs:
     outputs:
       # Propagate the build step's outcome to the workflow output.
       result: ${{ steps.compile.outputs.outcome }}
+      duration-seconds: ${{ steps.timing.outputs.duration-seconds }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref || github.ref }}
+
+      - name: Record build start time
+        id: start-time
+        shell: bash
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Cache apt packages
         uses: actions/cache@v4
@@ -174,6 +193,12 @@ jobs:
         shell: bash
         run: ${{ inputs.build-command }}
 
+      - name: Record build duration
+        id: timing
+        if: always()
+        shell: bash
+        run: echo "duration-seconds=$(( $(date +%s) - ${{ steps.start-time.outputs.epoch }} ))" >> "$GITHUB_OUTPUT"
+
       - name: Archive build tree
         # actions/upload-artifact does not preserve executable bits, so pack
         # the tree into a tarball (which does) and upload that instead.
@@ -201,6 +226,8 @@ jobs:
       result: ${{ steps.aggregate.outputs.outcome }}
       unit-test-result: ${{ steps.aggregate.outputs.unit-test-outcome }}
       valgrind-result: ${{ steps.aggregate.outputs.valgrind-outcome }}
+      duration-seconds: ${{ steps.aggregate.outputs.duration-seconds }}
+      test-summary: ${{ steps.aggregate.outputs.test-summary }}
 
     steps:
       - name: Download build tree
@@ -239,10 +266,22 @@ jobs:
         run: |
           sudo apt-get install -y --no-install-recommends valgrind
 
+      - name: Record test start time
+        id: start-time
+        shell: bash
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Run unit tests
         id: unit-test
         continue-on-error: true
         shell: bash
+        # RICH_TEST_SUMMARY_FILE is a convention, not a requirement: if
+        # test-command writes Markdown there (e.g. a parsed pass/fail/skip
+        # count in a format only the consumer's own test runner knows),
+        # it is surfaced verbatim via the test-summary output below. A
+        # test-command that ignores the variable just leaves an empty file.
+        env:
+          RICH_TEST_SUMMARY_FILE: ${{ runner.temp }}/rich-test-summary.md
         run: |
           if [ -n "${{ inputs.test-working-directory }}" ]; then
             cd ${{ inputs.test-working-directory }}
@@ -264,10 +303,18 @@ jobs:
         id: aggregate
         if: always()
         shell: bash
+        env:
+          RICH_TEST_SUMMARY_FILE: ${{ runner.temp }}/rich-test-summary.md
         run: |
           test_outcome="${{ steps.unit-test.outcome }}"
           vg_outcome="${{ steps.valgrind-test.outcome }}"
           result="success"
+
+          echo "duration-seconds=$(( $(date +%s) - ${{ steps.start-time.outputs.epoch }} ))" >> "$GITHUB_OUTPUT"
+
+          echo "test-summary<<TEST_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
+          [ -f "$RICH_TEST_SUMMARY_FILE" ] && cat "$RICH_TEST_SUMMARY_FILE" >> "$GITHUB_OUTPUT"
+          echo "TEST_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
 
           if [ "$test_outcome" = "failure" ]; then
             echo "::error title=Tests Failed::\`${{ inputs.test-command }}\` reported failures."
