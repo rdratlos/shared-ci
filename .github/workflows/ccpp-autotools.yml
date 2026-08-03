@@ -116,6 +116,14 @@ on:
           to the file path in $RICH_TEST_SUMMARY_FILE, its content is passed through
           verbatim here; consumers that don't use the convention get an empty string.
         value: ${{ jobs.test.outputs.test-summary }}
+      valgrind-summary:
+        description: >
+          Same convention as test-summary, for valgrind-command via
+          $RICH_VALGRIND_SUMMARY_FILE. Content is opaque to this workflow --
+          a consumer wanting structured (not just Markdown) data back, e.g.
+          JSON for building Checks API annotations, can write that instead;
+          nothing here parses or validates the content either way.
+        value: ${{ jobs.test.outputs.valgrind-summary }}
 
 jobs:
   build:
@@ -262,6 +270,7 @@ jobs:
       valgrind-result: ${{ steps.aggregate.outputs.valgrind-outcome }}
       duration-seconds: ${{ steps.aggregate.outputs.duration-seconds }}
       test-summary: ${{ steps.aggregate.outputs.test-summary }}
+      valgrind-summary: ${{ steps.aggregate.outputs.valgrind-summary }}
 
     steps:
       - name: Download build tree
@@ -327,6 +336,10 @@ jobs:
         id: valgrind-test
         continue-on-error: true
         shell: bash
+        # RICH_VALGRIND_SUMMARY_FILE mirrors RICH_TEST_SUMMARY_FILE above --
+        # same opt-in convention, same pass-through, just for valgrind-command.
+        env:
+          RICH_VALGRIND_SUMMARY_FILE: ${{ runner.temp }}/rich-valgrind-summary.md
         run: |
           if [ -n "${{ inputs.test-working-directory }}" ]; then
             cd ${{ inputs.test-working-directory }}
@@ -339,6 +352,7 @@ jobs:
         shell: bash
         env:
           RICH_TEST_SUMMARY_FILE: ${{ runner.temp }}/rich-test-summary.md
+          RICH_VALGRIND_SUMMARY_FILE: ${{ runner.temp }}/rich-valgrind-summary.md
           # Passed as env vars and referenced as shell variables below --
           # deliberately NOT interpolated directly as ${{ inputs.test-command }}
           # inside this step's own run: script. GitHub Actions splices
@@ -361,6 +375,10 @@ jobs:
           echo "test-summary<<TEST_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
           [ -f "$RICH_TEST_SUMMARY_FILE" ] && cat "$RICH_TEST_SUMMARY_FILE" >> "$GITHUB_OUTPUT"
           echo "TEST_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
+
+          echo "valgrind-summary<<VALGRIND_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
+          [ -f "$RICH_VALGRIND_SUMMARY_FILE" ] && cat "$RICH_VALGRIND_SUMMARY_FILE" >> "$GITHUB_OUTPUT"
+          echo "VALGRIND_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
 
           # Only the first line goes in the annotation -- the full
           # command (possibly multi-line) is already visible in the "Run

@@ -31,6 +31,11 @@ passed between them). Beyond the plain `build-result`/`test-result`/
   empty string — this workflow never inspects or parses `test-command`'s
   output itself, keeping any project-specific test-runner format out of
   the reusable layer.
+- `valgrind-summary` — same convention, for `valgrind-command` via
+  `$RICH_VALGRIND_SUMMARY_FILE`. The content is opaque here too, so a
+  consumer wanting structured data back (e.g. JSON to build Checks API
+  annotations from parsed leak reports) can write that instead of
+  Markdown — this workflow doesn't care what's in the file.
 
 ### `ccpp-target-compile.yml` — compile a set of specific object targets
 
