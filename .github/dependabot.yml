@@ -1,0 +1,12 @@
+# Keeps the SHA-pinned actions in .github/workflows/ (and the version
+# comments next to them) current. Each bump is a pull request, so the
+# lint workflow runs before it lands.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
