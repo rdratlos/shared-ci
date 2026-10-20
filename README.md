@@ -47,3 +47,17 @@ needing GitHub Check runs or other formatting should parse that JSON
 rather than re-deriving results from logs.
 
 
+
+## Security notes for consumers
+
+- **`*-command` inputs (and `env-vars`) are code.** They are executed with
+  `eval`; the calling workflow file is the trust boundary. Never build one
+  from untrusted context such as `github.head_ref`, PR titles or bodies —
+  pass such values to your own steps through `env:` instead.
+- **Outputs carry text the tested code can influence.** `test-summary`,
+  `valgrind-summary` and `results` contain whatever the build/test wrote.
+  Consume them through `env:` (`"$VAR"` in shell, `process.env.VAR` in
+  `actions/github-script`), never as `${{ }}` inside a script.
+- **`runs-on`:** these workflows build and run the checked-out code, which on
+  a public repository includes pull requests from forks. Don't point them at
+  self-hosted runners for such events.

@@ -24,13 +24,6 @@ runs:
   using: 'composite'
 
   steps:
-    - name: Cache apt packages
-      uses: actions/cache@v4
-      with:
-        path: /var/cache/apt/archives
-        key: ${{ runner.os }}-apt-autotools-static
-        lookup-only: true
-
     - name: Install Autotools base dependencies
       shell: bash
       run: |
@@ -42,8 +35,14 @@ runs:
     - name: Install project-specific dependencies
       if: ${{ inputs.project-deps != '' }}
       shell: bash
+      env:
+        PROJECT_DEPS: ${{ inputs.project-deps }}
       run: |
-        sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+        # Word splitting is intended (space-separated package list);
+        # globbing is not.
+        set -f
+        # shellcheck disable=SC2086
+        sudo apt-get install -y --no-install-recommends $PROJECT_DEPS
 
     - name: Install Valgrind
       if: ${{ inputs.install-valgrind == 'true' }}
