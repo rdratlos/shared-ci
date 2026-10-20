@@ -22,8 +22,15 @@ Split into a `build` job and a `test` job (the build tree is archived and
 passed between them). Beyond the plain `build-result`/`test-result`/
 `unit-test-result`/`valgrind-result` outputs, it also exposes:
 
-- `build-duration-seconds` / `test-duration-seconds` — wall-clock time for
-  each job, for consumers building a stage-timing summary.
+- `build-duration-seconds` / `test-duration-seconds` /
+  `valgrind-duration-seconds` — wall-clock seconds for Configure+Compile,
+  for `test-command` alone, and for `valgrind-command` alone, for
+  consumers building a stage-timing summary. Toolchain installs and
+  bootstrap are not counted. A duration is empty when its stage never
+  started (setup failed, or Valgrind not enabled).
+- `build-result` / `test-result` are `failure` when a setup step (apt,
+  bootstrap, artifact download) fails and the build or tests never run,
+  not just when they run and fail.
 - `test-summary` — free-form Markdown, opt-in. If a consumer's
   `test-command` writes to the path in `$RICH_TEST_SUMMARY_FILE` (an env
   var this workflow sets before running it), that content is passed
@@ -47,6 +54,41 @@ needing GitHub Check runs or other formatting should parse that JSON
 rather than re-deriving results from logs.
 
 
+
+## Versioning and pinning
+
+Releases are tags on `main`:
+
+- `v1.x.y` — immutable. A tag ruleset blocks moving and deleting them.
+- `v1` — moves to the latest `v1.x.y`. Only maintainers may move it.
+
+Within `v1`, input and output names and their meaning stay compatible;
+a breaking change starts `v2`.
+
+Pin consumers to a full commit SHA with the version as a comment, and let
+Dependabot (`package-ecosystem: github-actions`) propose updates:
+
+```yaml
+uses: rdratlos/shared-ci/.github/workflows/ccpp-autotools.yml@<commit-sha> # v1.0.0
+```
+
+`@main` and `@v1` move without the consumer's CI ever testing the new
+state. This repository pins its own actions by SHA too, so a consumer's
+pin covers everything these workflows run.
+
+### Release procedure
+
+1. Merge the change into `main` with a merge commit, after a consumer
+   (racoon-ipsec-tools) has run green against the pull request branch
+   (`uses: ...@<branch>` in a draft pull request there).
+2. Check that `main`'s tree equals what the consumer tested:
+   `git diff <tested-branch-head> origin/main` must be empty. If not,
+   test again.
+3. Tag: `git tag -a v1.x.y -m "v1.x.y" origin/main && git push origin v1.x.y`.
+4. Move consumers to the new SHA (Dependabot pull request, or the draft
+   pull request from step 1). Their CI runs on the pinned SHA before it
+   lands.
+5. Then move `v1`: `git tag -f v1 v1.x.y^{commit} && git push -f origin v1`.
 
 ## Security notes for consumers
 

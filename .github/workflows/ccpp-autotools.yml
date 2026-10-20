@@ -109,6 +109,9 @@ on:
       test-duration-seconds:
         description: 'Wall-clock seconds spent running test-command (unit tests only, excluding Valgrind).'
         value: ${{ jobs.test.outputs.duration-seconds }}
+      valgrind-duration-seconds:
+        description: 'Wall-clock seconds spent running valgrind-command (empty if Valgrind did not run).'
+        value: ${{ jobs.test.outputs.valgrind-duration-seconds }}
       test-summary:
         description: >
           Free-form Markdown a consumer's test-command may optionally write, for richer
@@ -140,17 +143,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           ref: ${{ inputs.ref || github.ref }}
           # The build tree (including .git/) is archived into an artifact
           # below; a persisted token in .git/config would ship with it.
           persist-credentials: false
-
-      - name: Record build start time
-        id: start-time
-        shell: bash
-        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Install Autotools toolchain
         shell: bash
@@ -203,6 +201,13 @@ jobs:
             autoreconf -fi
           fi
 
+      # Starts the clock for build-duration-seconds: toolchain installs and
+      # bootstrap above are setup, not part of Configure+Compile.
+      - name: Record build start time
+        id: start-time
+        shell: bash
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       # The *-command inputs are code by design: the caller's workflow file
       # is the trust boundary, so never build one from untrusted context
       # (branch names, PR text). They reach the shell via env + eval rather
@@ -236,8 +241,11 @@ jobs:
           configure_outcome: ${{ steps.configure.outcome }}
           compile_outcome: ${{ steps.compile.outcome }}
         run: |
+          # Success only if both steps actually succeeded. When a setup step
+          # (apt, bootstrap) fails, Configure and Compile are both skipped;
+          # that is a failed build, not a green one.
           result="success"
-          if [ "$configure_outcome" = "failure" ] || [ "$compile_outcome" = "failure" ]; then
+          if [ "$configure_outcome" != "success" ] || [ "$compile_outcome" != "success" ]; then
             result="failure"
           fi
           {
@@ -252,7 +260,11 @@ jobs:
         shell: bash
         env:
           START_EPOCH: ${{ steps.start-time.outputs.epoch }}
-        run: echo "duration-seconds=$(( $(date +%s) - START_EPOCH ))" >> "$GITHUB_OUTPUT"
+        # Empty if setup failed before the clock started.
+        run: |
+          if [ -n "$START_EPOCH" ]; then
+            echo "duration-seconds=$(( $(date +%s) - START_EPOCH ))" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Archive build tree
         # actions/upload-artifact does not preserve executable bits, so pack
@@ -263,7 +275,7 @@ jobs:
 
       - name: Upload build tree
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ inputs.artifact-name }}
           path: build-tree.tar
@@ -288,12 +300,13 @@ jobs:
       unit-test-result: ${{ steps.aggregate.outputs.unit-test-outcome }}
       valgrind-result: ${{ steps.aggregate.outputs.valgrind-outcome }}
       duration-seconds: ${{ steps.aggregate.outputs.duration-seconds }}
+      valgrind-duration-seconds: ${{ steps.aggregate.outputs.valgrind-duration-seconds }}
       test-summary: ${{ steps.aggregate.outputs.test-summary }}
       valgrind-summary: ${{ steps.aggregate.outputs.valgrind-summary }}
 
     steps:
       - name: Download build tree
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: ${{ inputs.artifact-name }}
 
@@ -351,6 +364,14 @@ jobs:
           fi
           eval "$TEST_COMMAND"
 
+      # Stops the unit-test clock and starts the Valgrind one, so
+      # test-duration-seconds excludes Valgrind.
+      - name: Record unit-test end time
+        id: unit-test-end
+        if: always()
+        shell: bash
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Run Valgrind checks
         if: ${{ inputs.enable-valgrind && success() }}
         id: valgrind-test
@@ -390,6 +411,7 @@ jobs:
           test_outcome: ${{ steps.unit-test.outcome }}
           vg_outcome: ${{ steps.valgrind-test.outcome }}
           START_EPOCH: ${{ steps.start-time.outputs.epoch }}
+          UNIT_END_EPOCH: ${{ steps.unit-test-end.outputs.epoch }}
         run: |
           result="success"
 
@@ -399,6 +421,10 @@ jobs:
           if [ "$test_outcome" = "failure" ]; then
             first_line=$(printf '%s\n' "$TEST_COMMAND" | head -n1)
             echo "::error title=Tests Failed::\`$first_line\` (test-command) reported failures. See the 'Run unit tests' step log for the full command and output."
+            result="failure"
+          elif [ "$test_outcome" != "success" ]; then
+            # Skipped: a setup step (download, extract, apt) failed first.
+            echo "::error title=Tests Not Run::test-command did not run because an earlier step of the Test job failed."
             result="failure"
           fi
           if [ "$vg_outcome" = "failure" ]; then
@@ -416,8 +442,16 @@ jobs:
             echo "outcome=$result"
             echo "unit-test-outcome=$test_outcome"
             echo "valgrind-outcome=${vg_outcome:-skipped}"
-            echo "duration-seconds=$(( $(date +%s) - START_EPOCH ))"
           } >> "$GITHUB_OUTPUT"
+
+          # Durations stay empty for a clock that never started.
+          now=$(date +%s)
+          if [ -n "$START_EPOCH" ] && [ -n "$UNIT_END_EPOCH" ]; then
+            echo "duration-seconds=$(( UNIT_END_EPOCH - START_EPOCH ))" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$vg_outcome" ] && [ "$vg_outcome" != "skipped" ] && [ -n "$UNIT_END_EPOCH" ]; then
+            echo "valgrind-duration-seconds=$(( now - UNIT_END_EPOCH ))" >> "$GITHUB_OUTPUT"
+          fi
 
           # The summary files are written by the tested code, so a fixed
           # heredoc delimiter could appear in them (or a missing final

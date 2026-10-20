@@ -1,0 +1,59 @@
+# Lints this repository's own workflows: actionlint, with shellcheck for
+# every run: script. shared-ci has no other CI, and a broken reusable
+# workflow only shows up in a consumer's run otherwise.
+#
+# Both tools are fixed release binaries, checked against a pinned SHA-256:
+# actionlint's from its release checksums file; shellcheck publishes none,
+# so its hash was recorded when the version was pinned.
+
+name: Lint workflows
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint + shellcheck
+    runs-on: ubuntu-latest
+    env:
+      ACTIONLINT_VERSION: '1.7.12'
+      ACTIONLINT_SHA256: '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8'
+      SHELLCHECK_VERSION: '0.11.0'
+      SHELLCHECK_SHA256: '8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Install actionlint and shellcheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin="$RUNNER_TEMP/bin"
+          mkdir -p "$bin"
+          cd "$RUNNER_TEMP"
+
+          al="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSLO "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${al}"
+          echo "${ACTIONLINT_SHA256}  ${al}" | sha256sum -c -
+          tar -xzf "$al" -C "$bin" actionlint
+
+          sc="shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz"
+          curl -fsSLO "https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/${sc}"
+          echo "${SHELLCHECK_SHA256}  ${sc}" | sha256sum -c -
+          tar -xJf "$sc" --strip-components=1 -C "$bin" "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+
+          echo "$bin" >> "$GITHUB_PATH"
+
+      - name: Run actionlint
+        shell: bash
+        run: |
+          actionlint -version
+          shellcheck --version
+          actionlint -color -shellcheck="$(command -v shellcheck)"
