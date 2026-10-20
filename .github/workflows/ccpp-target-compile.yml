@@ -96,16 +96,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.ref || github.ref }}
-
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-autotools-static
-          lookup-only: true
+          # Nothing here needs git credentials after the checkout, and the
+          # compiled code shouldn't find a token in .git/config.
+          persist-credentials: false
 
       - name: Install Autotools toolchain
         shell: bash
@@ -118,13 +114,21 @@ jobs:
       - name: Install project-specific dependencies
         if: ${{ inputs.project-deps != '' }}
         shell: bash
+        env:
+          PROJECT_DEPS: ${{ inputs.project-deps }}
         run: |
-          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+          # Word splitting is intended (space-separated package list);
+          # globbing is not.
+          set -f
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends $PROJECT_DEPS
 
       - name: Bootstrap build system
         if: ${{ inputs.bootstrap-command != '' }}
         shell: bash
-        run: ${{ inputs.bootstrap-command }}
+        env:
+          BOOTSTRAP_COMMAND: ${{ inputs.bootstrap-command }}
+        run: eval "$BOOTSTRAP_COMMAND"
 
       - name: Auto-detect bootstrap
         if: ${{ inputs.bootstrap-command == '' }}
@@ -138,18 +142,22 @@ jobs:
             autoreconf -fi
           fi
 
+      # configure-command and env-vars are code by design (both are
+      # eval'd): the caller's workflow file is the trust boundary, so never
+      # build them from untrusted context (branch names, PR text).
       - name: Configure
         id: configure
         shell: bash
         env:
           ENV_VARS: ${{ inputs.env-vars }}
+          CONFIGURE_COMMAND: ${{ inputs.configure-command }}
         run: |
           set -a
           if [ -n "$ENV_VARS" ]; then
             eval "$ENV_VARS"
           fi
           set +a
-          ${{ inputs.configure-command }}
+          eval "$CONFIGURE_COMMAND"
 
       - name: Compile targets and capture output
         id: compile
@@ -201,19 +209,22 @@ jobs:
             echo "| $label | \`$target\` | $outcome | $blocking |" >> "$GITHUB_STEP_SUMMARY"
           done < <(jq -c '.[]' <<<"$TARGETS_JSON")
 
-          echo "results<<RESULTS_EOF" >> "$GITHUB_OUTPUT"
-          echo "$results" >> "$GITHUB_OUTPUT"
-          echo "RESULTS_EOF" >> "$GITHUB_OUTPUT"
-
           if [ "$blocking_failed" = "true" ]; then
-            echo "result=failure" >> "$GITHUB_OUTPUT"
+            result=failure
           else
-            echo "result=success" >> "$GITHUB_OUTPUT"
+            result=success
           fi
+          delim="EOF_$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
+          {
+            echo "result=$result"
+            echo "results<<$delim"
+            echo "$results"
+            echo "$delim"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Upload compile output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.artifact-name }}
           path: compile-logs/

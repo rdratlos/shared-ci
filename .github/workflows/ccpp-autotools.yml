@@ -140,21 +140,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.ref || github.ref }}
+          # The build tree (including .git/) is archived into an artifact
+          # below; a persisted token in .git/config would ship with it.
+          persist-credentials: false
 
       - name: Record build start time
         id: start-time
         shell: bash
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-autotools-static
-          lookup-only: true
 
       - name: Install Autotools toolchain
         shell: bash
@@ -167,8 +163,14 @@ jobs:
       - name: Install project-specific dependencies
         if: ${{ inputs.project-deps != '' }}
         shell: bash
+        env:
+          PROJECT_DEPS: ${{ inputs.project-deps }}
         run: |
-          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+          # Word splitting is intended (space-separated package list);
+          # globbing is not.
+          set -f
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends $PROJECT_DEPS
 
       - name: Install Valgrind
         if: ${{ inputs.install-valgrind }}
@@ -185,7 +187,9 @@ jobs:
       - name: Bootstrap build system
         if: ${{ inputs.bootstrap-command != '' }}
         shell: bash
-        run: ${{ inputs.bootstrap-command }}
+        env:
+          BOOTSTRAP_COMMAND: ${{ inputs.bootstrap-command }}
+        run: eval "$BOOTSTRAP_COMMAND"
 
       - name: Auto-detect bootstrap
         if: ${{ inputs.bootstrap-command == '' }}
@@ -199,11 +203,18 @@ jobs:
             autoreconf -fi
           fi
 
+      # The *-command inputs are code by design: the caller's workflow file
+      # is the trust boundary, so never build one from untrusted context
+      # (branch names, PR text). They reach the shell via env + eval rather
+      # than ${{ }} splicing, so no step here has an expression in its
+      # script text; bash parses them exactly as before.
       - name: Configure
         id: configure
         continue-on-error: true
         shell: bash
-        run: ${{ inputs.configure-command }}
+        env:
+          CONFIGURE_COMMAND: ${{ inputs.configure-command }}
+        run: eval "$CONFIGURE_COMMAND"
 
       - name: Compile
         id: compile
@@ -213,28 +224,35 @@ jobs:
         if: steps.configure.outcome == 'success'
         continue-on-error: true
         shell: bash
-        run: ${{ inputs.build-command }}
+        env:
+          BUILD_COMMAND: ${{ inputs.build-command }}
+        run: eval "$BUILD_COMMAND"
 
       - name: Aggregate build outcome
         id: aggregate-build
         if: always()
         shell: bash
+        env:
+          configure_outcome: ${{ steps.configure.outcome }}
+          compile_outcome: ${{ steps.compile.outcome }}
         run: |
-          configure_outcome="${{ steps.configure.outcome }}"
-          compile_outcome="${{ steps.compile.outcome }}"
           result="success"
           if [ "$configure_outcome" = "failure" ] || [ "$compile_outcome" = "failure" ]; then
             result="failure"
           fi
-          echo "outcome=$result" >> "$GITHUB_OUTPUT"
-          echo "configure-outcome=$configure_outcome" >> "$GITHUB_OUTPUT"
-          echo "compile-outcome=${compile_outcome:-skipped}" >> "$GITHUB_OUTPUT"
+          {
+            echo "outcome=$result"
+            echo "configure-outcome=$configure_outcome"
+            echo "compile-outcome=${compile_outcome:-skipped}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Record build duration
         id: timing
         if: always()
         shell: bash
-        run: echo "duration-seconds=$(( $(date +%s) - ${{ steps.start-time.outputs.epoch }} ))" >> "$GITHUB_OUTPUT"
+        env:
+          START_EPOCH: ${{ steps.start-time.outputs.epoch }}
+        run: echo "duration-seconds=$(( $(date +%s) - START_EPOCH ))" >> "$GITHUB_OUTPUT"
 
       - name: Archive build tree
         # actions/upload-artifact does not preserve executable bits, so pack
@@ -245,7 +263,7 @@ jobs:
 
       - name: Upload build tree
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.artifact-name }}
           path: build-tree.tar
@@ -261,8 +279,9 @@ jobs:
     name: 'Test'
     needs: build
     runs-on: ${{ inputs.runs-on }}
-    permissions:
-      contents: read
+    # No checkout here, and artifacts come via the runtime token, so the
+    # job that runs the tested code gets no GITHUB_TOKEN scopes at all.
+    permissions: {}
     outputs:
       # Propagate the test step's outcome to the workflow output.
       result: ${{ steps.aggregate.outputs.outcome }}
@@ -274,20 +293,13 @@ jobs:
 
     steps:
       - name: Download build tree
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ${{ inputs.artifact-name }}
 
       - name: Extract build tree
         shell: bash
         run: tar -xf build-tree.tar && rm build-tree.tar
-
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-autotools-static
-          lookup-only: true
 
       - name: Install Autotools toolchain
         shell: bash
@@ -300,8 +312,14 @@ jobs:
       - name: Install project-specific dependencies
         if: ${{ inputs.project-deps != '' }}
         shell: bash
+        env:
+          PROJECT_DEPS: ${{ inputs.project-deps }}
         run: |
-          sudo apt-get install -y --no-install-recommends ${{ inputs.project-deps }}
+          # Word splitting is intended (space-separated package list);
+          # globbing is not.
+          set -f
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends $PROJECT_DEPS
 
       - name: Install Valgrind
         if: ${{ inputs.enable-valgrind }}
@@ -325,11 +343,13 @@ jobs:
         # test-command that ignores the variable just leaves an empty file.
         env:
           RICH_TEST_SUMMARY_FILE: ${{ runner.temp }}/rich-test-summary.md
+          TEST_WORKING_DIRECTORY: ${{ inputs.test-working-directory }}
+          TEST_COMMAND: ${{ inputs.test-command }}
         run: |
-          if [ -n "${{ inputs.test-working-directory }}" ]; then
-            cd ${{ inputs.test-working-directory }}
+          if [ -n "$TEST_WORKING_DIRECTORY" ]; then
+            cd "$TEST_WORKING_DIRECTORY"
           fi
-          ${{ inputs.test-command }}
+          eval "$TEST_COMMAND"
 
       - name: Run Valgrind checks
         if: ${{ inputs.enable-valgrind && success() }}
@@ -340,11 +360,13 @@ jobs:
         # same opt-in convention, same pass-through, just for valgrind-command.
         env:
           RICH_VALGRIND_SUMMARY_FILE: ${{ runner.temp }}/rich-valgrind-summary.md
+          TEST_WORKING_DIRECTORY: ${{ inputs.test-working-directory }}
+          VALGRIND_COMMAND: ${{ inputs.valgrind-command }}
         run: |
-          if [ -n "${{ inputs.test-working-directory }}" ]; then
-            cd ${{ inputs.test-working-directory }}
+          if [ -n "$TEST_WORKING_DIRECTORY" ]; then
+            cd "$TEST_WORKING_DIRECTORY"
           fi
-          ${{ inputs.valgrind-command }}
+          eval "$VALGRIND_COMMAND"
 
       - name: Aggregate test outcome
         id: aggregate
@@ -365,20 +387,11 @@ jobs:
           # as an env var's runtime value avoids that entirely.
           TEST_COMMAND: ${{ inputs.test-command }}
           VALGRIND_COMMAND: ${{ inputs.valgrind-command }}
+          test_outcome: ${{ steps.unit-test.outcome }}
+          vg_outcome: ${{ steps.valgrind-test.outcome }}
+          START_EPOCH: ${{ steps.start-time.outputs.epoch }}
         run: |
-          test_outcome="${{ steps.unit-test.outcome }}"
-          vg_outcome="${{ steps.valgrind-test.outcome }}"
           result="success"
-
-          echo "duration-seconds=$(( $(date +%s) - ${{ steps.start-time.outputs.epoch }} ))" >> "$GITHUB_OUTPUT"
-
-          echo "test-summary<<TEST_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
-          [ -f "$RICH_TEST_SUMMARY_FILE" ] && cat "$RICH_TEST_SUMMARY_FILE" >> "$GITHUB_OUTPUT"
-          echo "TEST_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
-
-          echo "valgrind-summary<<VALGRIND_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
-          [ -f "$RICH_VALGRIND_SUMMARY_FILE" ] && cat "$RICH_VALGRIND_SUMMARY_FILE" >> "$GITHUB_OUTPUT"
-          echo "VALGRIND_SUMMARY_EOF" >> "$GITHUB_OUTPUT"
 
           # Only the first line goes in the annotation -- the full
           # command (possibly multi-line) is already visible in the "Run
@@ -396,9 +409,36 @@ jobs:
           if [ "$result" = "success" ]; then
             echo "::notice title=All Checks Passed::Tests and validation completed successfully."
           fi
-          echo "outcome=$result" >> "$GITHUB_OUTPUT"
-          echo "unit-test-outcome=$test_outcome" >> "$GITHUB_OUTPUT"
-          echo "valgrind-outcome=${vg_outcome:-skipped}" >> "$GITHUB_OUTPUT"
+
+          # The outcome outputs go first: should anything below go wrong,
+          # consumers still get the real results rather than empty values.
+          {
+            echo "outcome=$result"
+            echo "unit-test-outcome=$test_outcome"
+            echo "valgrind-outcome=${vg_outcome:-skipped}"
+            echo "duration-seconds=$(( $(date +%s) - START_EPOCH ))"
+          } >> "$GITHUB_OUTPUT"
+
+          # The summary files are written by the tested code, so a fixed
+          # heredoc delimiter could appear in them (or a missing final
+          # newline glue it to the content) and break the output file.
+          # Use a random delimiter and make sure it starts its own line.
+          emit_file_output() {
+            local name=$1 file=$2 delim
+            delim="EOF_$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
+            echo "$name<<$delim"
+            if [ -s "$file" ]; then
+              cat "$file"
+              if [ -n "$(tail -c1 "$file")" ]; then
+                echo
+              fi
+            fi
+            echo "$delim"
+          }
+          {
+            emit_file_output test-summary "$RICH_TEST_SUMMARY_FILE"
+            emit_file_output valgrind-summary "$RICH_VALGRIND_SUMMARY_FILE"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Fail job if tests or Valgrind failed
         if: steps.aggregate.outputs.outcome == 'failure'
